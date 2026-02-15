@@ -1,0 +1,45 @@
+name: Generate AI Unit Tests  # Name of the workflow
+
+# Trigger: When code changes in src/ folder
+on:
+  push:
+    paths:
+      - 'src/**'
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest   # GitHub runner environment
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python for MCP dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install required Python packages
+      - name: Install dependencies
+        run: |
+          pip install fastapi openai requests
+
+      # Step 4: Call MCP server to generate tests
+      - name: Call MCP Server
+        run: |
+          curl -X POST https://your-mcp-server.com/generate-tests \
+          -H "Content-Type: application/json" \
+          -d '{"repo":"${GITHUB_REPOSITORY}","pr":0}'
+
+      # Step 5: Commit generated tests back to GitHub
+      - name: Commit generated tests
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git checkout -b ai-generated-tests || git checkout ai-generated-tests
+          git add tests/
+          git commit -m "Add AI-generated unit tests" || echo "No changes to commit"
+          git push --set-upstream origin ai-generated-tests
+
