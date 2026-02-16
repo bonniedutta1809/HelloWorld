@@ -1,0 +1,17 @@
+name: MCP Agent Test
+
+on:
+  push:
+    branches:
+      - ai-generated-tests
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Print message
+        run: echo "MCP workflow triggered successfully!"
