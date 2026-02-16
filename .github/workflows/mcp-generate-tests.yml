@@ -11,7 +11,8 @@ on:
       - "src/**"
     branches:
       - main
-
+permissions:
+  contents: write
 jobs:
   generate-tests:
     runs-on: ubuntu-latest
