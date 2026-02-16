@@ -1,17 +1,24 @@
-name: MCP Agent Test
+name: MCP AI Test Generator
 
 on:
-  push:
-    branches:
-      - ai-generated-tests
-      - main
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  test:
+  generate-tests:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
 
-      - name: Print message
-        run: echo "MCP workflow triggered successfully!"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Call MCP Server for Test Generation
+        run: |
+          curl -X POST https://your-mcp-server.com/generate-tests \
+          -H "Authorization: Bearer ${{ secrets.MCP_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "repo": "${{ github.repository }}",
+                "pr": "${{ github.event.pull_request.number }}",
+                "branch": "${{ github.head_ref }}",
+                "files": ["src/HelloWorld.java"]
+              }'

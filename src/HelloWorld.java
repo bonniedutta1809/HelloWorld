@@ -7,5 +7,9 @@ public class HelloWorld {
 // trigger workflow
 // trigger workflow demo
 // trigger workflow again
+
 System.out.println("Hello Bonnie Dutta!");
 System.out.println("Hello, MCP Trigger Test");
+
+System.out.println("Hello Bonnie Dutta");
+
