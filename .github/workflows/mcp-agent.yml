@@ -13,7 +13,7 @@ jobs:
 
       - name: Call MCP Server for Test Generation
         run: |
-          curl -X POST https://your-mcp-server.com/generate-tests \
+          curl -X POST https://luther-unmagnetical-lumpingly.ngrok-free.dev/generate-tests \
           -H "Authorization: Bearer ${{ secrets.MCP_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
