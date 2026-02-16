@@ -8,7 +8,7 @@ public class HelloWorld {
 // trigger workflow demo
 // trigger workflow again
 
-System.out.println("Hello Bonnie Dutta! Hi There");
+System.out.println("Hello Bonnie Dutta ! Hi There");
 
 
 
