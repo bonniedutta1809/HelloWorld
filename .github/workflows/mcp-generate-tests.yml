@@ -66,9 +66,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git checkout -b ai-generated-tests || git checkout ai-generated-tests
-          git add tests/
-          git commit -m "Add AI-generated tests" || echo "No changes to commit"
-          git push -u origin ai-generated-tests
+    git config --global user.name "github-actions"
+    git config --global user.email "github-actions@github.com"
+    # Checkout or create the branch
+    git checkout -b ai-generated-tests || git checkout ai-generated-tests
+    git add tests/
+    git commit -m "Add AI-generated tests" || echo "No changes to commit"
+    # Force push to overwrite the remote branch
+    git push -f origin ai-generated-tests
