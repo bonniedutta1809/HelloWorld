@@ -3,16 +3,18 @@ name: MCP AI Test Generator
 on:
   push:
     paths:
-      - "src/**"
+      - "src/**/*.java"
     branches:
       - main
   pull_request:
     paths:
-      - "src/**"
+      - "src/**/*.java"
     branches:
       - main
+
 permissions:
   contents: write
+
 jobs:
   generate-tests:
     runs-on: ubuntu-latest
@@ -22,15 +24,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Get list of changed files dynamically
-      - name: Get changed files
+      # 2️⃣ Get list of changed Java files dynamically
+      - name: Get changed Java files
         id: files
         run: |
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/' || true)
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/.*\.java$' || true)
           echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
           echo "$CHANGED" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          echo "Changed files: $CHANGED"
+          echo "Changed Java files: $CHANGED"
 
       # 3️⃣ Setup Python for MCP client
       - name: Set up Python
@@ -61,14 +63,14 @@ jobs:
                   \"files\": $FILES_JSON
                 }"
 
-      # 6️⃣ Commit and push generated tests
-     - name: Commit and push AI tests
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  run: |
-    git config --global user.name "github-actions"
-    git config --global user.email "github-actions@github.com"
-    git checkout -b ai-generated-tests || git checkout ai-generated-tests
-    git add tests/
-    git commit -m "Add AI-generated tests" || echo "No changes to commit"
-    git push -f origin ai-generated-tests
+      # 6️⃣ Commit and push AI-generated tests
+      - name: Commit and push AI tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git checkout -b ai-generated-tests || git checkout ai-generated-tests
+          git add tests/
+          git commit -m "Add AI-generated tests" || echo "No changes to commit"
+          git push -f origin ai-generated-tests
