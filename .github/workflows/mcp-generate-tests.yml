@@ -1,50 +1,76 @@
-name: Generate AI Unit Tests
+name: MCP AI Test Generator
 
 on:
   push:
     paths:
-      - "src/**"      # triggers when anything inside src/ changes
+      - "src/**/*.java"
     branches:
       - main
+  pull_request:
+    paths:
+      - "src/**/*.java"
+    branches:
+      - main
+
 permissions:
   contents: write
+
 jobs:
   generate-tests:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout the repo
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1️⃣ Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # 2️⃣ Setup Python (for MCP server client)
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      # 2️⃣ Get list of changed Java files dynamically
+      - name: Get changed Java files
+        id: files
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/.*\.java$' || true)
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "Changed Java files: $CHANGED"
 
-    # 3️⃣ Install dependencies
-    - name: Install dependencies
-      run: |
-        pip install openai fastapi uvicorn
+      # 3️⃣ Setup Python for MCP client
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    # 4️⃣ Call MCP server to generate tests
-    - name: Generate AI tests via MCP
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: |
-        curl -X POST https://luther-unmagnetical-lumpingly.ngrok-free.dev/generate-tests \
-        -H "Content-Type: application/json" \
-        -d '{"repo":"GithubCopilot","pr":1}'
+      # 4️⃣ Install dependencies for MCP server
+      - name: Install dependencies
+        run: pip install openai fastapi uvicorn jq
 
-    # 5️⃣ Commit and push generated tests back to GitHub
-    - name: Commit and push AI tests
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
-        git checkout -b ai-generated-tests || git checkout ai-generated-tests
-        git add tests/
-        git commit -m "Add AI-generated tests" || echo "No changes to commit"
-        git push -u origin ai-generated-tests
+      # 5️⃣ Call MCP server to generate AI tests
+      - name: Generate AI tests via MCP
+        env:
+          MCP_TOKEN: ${{ secrets.MCP_TOKEN }}
+        run: |
+          FILES_JSON=$(echo "$CHANGED_FILES" | jq -R -s -c 'split("\n")[:-1]')
+          PR_NUMBER=${{ github.event.pull_request.number || 0 }}
+          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          echo "Calling MCP server with files: $FILES_JSON"
+          curl -X POST https://luther-unmagnetical-lumpingly.ngrok-free.dev/generate-tests \
+            -H "Authorization: Bearer $MCP_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+                  \"repo\": \"${{ github.repository }}\",
+                  \"pr\": $PR_NUMBER,
+                  \"branch\": \"$BRANCH_NAME\",
+                  \"files\": $FILES_JSON
+                }"
+
+      # 6️⃣ Commit and push AI-generated tests
+      - name: Commit and push AI tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git checkout -b ai-generated-tests || git checkout ai-generated-tests
+          git add tests/
+          git commit -m "Add AI-generated tests" || echo "No changes to commit"
+          git push -f origin ai-generated-tests
